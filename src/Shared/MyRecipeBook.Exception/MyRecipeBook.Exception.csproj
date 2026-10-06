@@ -4,6 +4,23 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="ResourceMessagesException.resx">
+      <StronglyTypedLanguage>C#</StronglyTypedLanguage>
+      <StronglyTypedNamespace>MyRecipeBook.Exception</StronglyTypedNamespace>
+      <StronglyTypedClassName>ResourceMessagesException</StronglyTypedClassName>
+      <StronglyTypedFileName>$(IntermediateOutputPath)ResourceMessagesException.Designer.cs</StronglyTypedFileName>
+      <PublicClass>true</PublicClass>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- O editor compila os projetos sem executar o pipeline completo de recursos. -->
+  <Target Name="GenerateResourceMessagesForDesignTimeBuild"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="PrepareForBuild;PrepareResources"
+          Condition="'$(DesignTimeBuild)' == 'true'" />
 
 </Project>
