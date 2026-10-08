@@ -2,6 +2,9 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
+using MyRecipeBook.Api.Filters;
+using MyRecipeBook.Infrastructure;
+using MyRecipeBook.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +17,10 @@ builder.Services.AddSwaggerGen(options => {
     Version = "v1"
   });
 });
+
+// Add application and infrastructure services on dependency injection
+builder.Services.AddInfrastructure();
+builder.Services.AddApplication();
 
 // Configure localization options
 builder.Services.Configure<RequestLocalizationOptions>(options => {
@@ -31,6 +38,9 @@ builder.Services.Configure<RequestLocalizationOptions>(options => {
     new AcceptLanguageHeaderRequestCultureProvider()
   };
 });
+
+// Register the exception filter globally'
+builder.Services.AddMvc(options => options.Filters.Add<ExceptionFilter>());
 
 var app = builder.Build();
 
