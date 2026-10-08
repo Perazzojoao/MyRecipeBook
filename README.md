@@ -39,6 +39,20 @@ A solution `MyRecipeBook.slnx` agrupa os quatro projetos de Backend em `src/Back
 | `MyRecipeBook.Communication` | Nenhum projeto da solução |
 | `MyRecipeBook.Exception` | Nenhum projeto da solução |
 
+### FluentValidation
+
+O projeto `MyRecipeBook.Application` referencia o pacote [FluentValidation](https://www.nuget.org/packages/FluentValidation/12.1.1) na versão `12.1.1`, para definir regras de validação dos dados recebidos pelos casos de uso. Essa versão é compatível com o `net10.0` utilizado na solução.
+
+Para adicionar a mesma dependência a partir da raiz do repositório:
+
+```bash
+dotnet add src/Backend/MyRecipeBook.Application/MyRecipeBook.Application.csproj package FluentValidation --version 12.1.1
+```
+
+O `RegisterUserAccountValidator` valida nome, e-mail e senha usando as mensagens de `ResourceMessagesException`. As mensagens são consultadas durante a validação, conforme a `CurrentUICulture`: inglês é o padrão e `pt-BR` tem traduções próprias. A chamada do validador no caso de uso ainda precisa ser implementada.
+
+A classe pública `ResourceMessagesException` é gerada pelo MSBuild em `obj/`, a partir do `.resx`. O projeto `MyRecipeBook.Exception` também executa a geração na compilação de análise do editor (`DesignTimeBuild`), para disponibilizar a classe no autocomplete. Se o editor ainda exibir diagnósticos antigos após atualizar o `.csproj`, recarregue a solução ou reinicie o servidor de linguagem C#.
+
 ## Executar a configuração atual
 
 Na raiz do repositório, restaure e compile:
@@ -106,7 +120,7 @@ O backend ainda não tem Entity Framework, conector MySQL, `ConnectionStrings` o
 
 ## Recriar a configuração do zero
 
-Os comandos abaixo são executados em um diretório vazio com os requisitos instalados. `--format slnx` é a opção confirmada pelo CLI instalado para criar XML Solution Files. Os comandos criam a solution, os seis projetos, as referências, o pacote Swagger e os arquivos de configuração locais.
+Os comandos abaixo são executados em um diretório vazio com os requisitos instalados. `--format slnx` é a opção confirmada pelo CLI instalado para criar XML Solution Files. Os comandos criam a solution, os seis projetos, as referências, os pacotes Swagger e FluentValidation e os arquivos de configuração locais.
 
 ```bash
 mkdir MyRecipeBook
@@ -147,6 +161,7 @@ dotnet reference add \
 
 dotnet remove src/Backend/MyRecipeBook.Api/MyRecipeBook.Api.csproj package Microsoft.AspNetCore.OpenApi
 dotnet add src/Backend/MyRecipeBook.Api/MyRecipeBook.Api.csproj package Swashbuckle.AspNetCore --version 10.2.3
+dotnet add src/Backend/MyRecipeBook.Application/MyRecipeBook.Application.csproj package FluentValidation --version 12.1.1
 ```
 
 `dotnet sln add` registra e organiza projetos na solution; as chamadas separadas a `dotnet reference add` criam as dependências `ProjectReference` entre eles.
