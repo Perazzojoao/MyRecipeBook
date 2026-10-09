@@ -14,25 +14,28 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0,
       Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="NAME_REQUIRED" xml:space="preserve">
+  <data name="VALIDATION_NAME_REQUIRED" xml:space="preserve">
     <value>Name is required.</value>
   </data>
-  <data name="NAME_TOO_LONG" xml:space="preserve">
+  <data name="VALIDATION_NAME_TOO_LONG" xml:space="preserve">
     <value>Name cannot exceed 100 characters.</value>
   </data>
-  <data name="EMAIL_REQUIRED" xml:space="preserve">
+  <data name="VALIDATION_EMAIL_REQUIRED" xml:space="preserve">
     <value>Email is required.</value>
   </data>
-  <data name="PASSWORD_REQUIRED" xml:space="preserve">
+  <data name="VALIDATION_PASSWORD_REQUIRED" xml:space="preserve">
     <value>Password is required.</value>
   </data>
-  <data name="PASSWORD_TOO_SHORT" xml:space="preserve">
+  <data name="VALIDATION_PASSWORD_TOO_SHORT" xml:space="preserve">
     <value>Password must be at least 6 characters long.</value>
   </data>
-  <data name="EMAIL_INVALID" xml:space="preserve">
+  <data name="VALIDATION_EMAIL_INVALID" xml:space="preserve">
     <value>Invalid email format.</value>
   </data>
   <data name="UNKNOWN_ERROR" xml:space="preserve">
     <value>Unknown error.</value>
+  </data>
+  <data name="VALIDATION_EMAIL_ALREADY_EXISTS" xml:space="preserve">
+    <value>This email is already in use.</value>
   </data>
 </root>
