@@ -7,5 +7,5 @@ public class User {
   public string Password { get; set; } = string.Empty;
 
   public bool Active { get; set; } = true;
-  public DateTime DeletedAt { get; set; } = DateTime.UtcNow;
+  public DateTime? DeletedAt { get; set; } = null;
 }
