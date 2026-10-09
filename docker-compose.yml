@@ -11,5 +11,15 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  phpmyadmin:
+    image: phpmyadmin:5.2.3-apache
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: "3306"
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - mysql
+
 volumes:
   mysql_data:
