@@ -1,7 +1,8 @@
 using MyRecipeBook.Communication.Requests;
+using MyRecipeBook.Communication.Responses;
 
 namespace MyRecipeBook.Application.UseCases.User.Register;
 
 public interface IRegisterUserAccountUseCase {
-  public void Execute(RequestRegisterUserAccountJson request);
+  public Task<ResponseRegisterUserJson> Execute(RequestRegisterUserAccountJson request);
 }
