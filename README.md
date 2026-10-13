@@ -122,7 +122,7 @@ O projeto `WebApi.Tests` referencia `CommonTestUtilities` e `MyRecipeBook.Api` e
 
 ### Integração contínua
 
-Os workflows `.github/workflows/lint.yml` e `.github/workflows/tests.yml` executam separadamente em pushes na branch `main`, ao abrir, atualizar ou reabrir um PR com destino às branches `dev` ou `main`, e quando um PR passa a estar pronto para revisão.
+Os workflows `.github/workflows/lint.yml` e `.github/workflows/tests.yml` executam separadamente ao abrir, atualizar ou reabrir um PR com destino às branches `dev` ou `main`, e quando um PR passa a estar pronto para revisão.
 
 O workflow **Lint** restaura as dependências, compila toda a solução em Release e executa `dotnet format --verify-no-changes`, que verifica formatação e diagnósticos corrigíveis de estilo e análise estática no nível padrão de warning ou superior. O `.editorconfig` versionado mantém o estilo C# com dois espaços e a chave de abertura na mesma linha. O `global.json` seleciona um SDK estável da série .NET 10, permitindo atualizações dentro dessa série.
 
