@@ -126,7 +126,7 @@ Os workflows `.github/workflows/lint.yml` e `.github/workflows/tests.yml` execut
 
 O workflow **Lint** restaura as dependências, compila toda a solução em Release e executa `dotnet format --verify-no-changes`, que verifica formatação e diagnósticos corrigíveis de estilo e análise estática no nível padrão de warning ou superior. O `.editorconfig` versionado mantém o estilo C# com dois espaços e a chave de abertura na mesma linha. O `global.json` seleciona um SDK estável da série .NET 10, permitindo atualizações dentro dessa série.
 
-O workflow **Tests** compila em Release e executa todos os testes da solução. Ele usa `ubuntu-24.04`, com os testes executados diretamente no runner e acesso ao Docker pré-instalado, conforme a [documentação do Testcontainers para GitHub Actions](https://dotnet.testcontainers.org/cicd/#github-actions). A factory gerencia o MySQL temporário e o Ryuk permanece habilitado para a limpeza dos recursos. Os relatórios TRX são disponibilizados como artefato `test-results` por dois dias, inclusive quando há falhas nos testes.
+O workflow **Tests** compila em Release e executa todos os testes da solução usando `tests/coverlet.runsettings` e o coletor `XPlat Code Coverage`. Ele usa `ubuntu-24.04`, com os testes executados diretamente no runner e acesso ao Docker pré-instalado, conforme a [documentação do Testcontainers para GitHub Actions](https://dotnet.testcontainers.org/cicd/#github-actions). A factory gerencia o MySQL temporário e o Ryuk permanece habilitado para a limpeza dos recursos. O logger TRX gera os resultados dos testes, e o runsettings configura a cobertura em Cobertura e OpenCover apenas para as assemblies `MyRecipeBook.*`, excluindo os utilitários de testes e todos os arquivos sob `Migrations/`, inclusive subpastas. Após os testes passarem, o workflow exige a presença dos três formatos de relatório. Os arquivos `.trx`, `coverage.cobertura.xml` e `coverage.opencover.xml` gerados são disponibilizados como artefato `test-results` por dois dias, inclusive quando há falhas nos testes.
 
 Para reproduzir as verificações localmente, com Docker disponível:
 
@@ -135,7 +135,7 @@ dotnet restore MyRecipeBook.slnx
 dotnet build MyRecipeBook.slnx --configuration Release --no-restore
 dotnet format MyRecipeBook.slnx --verify-no-changes --no-restore
 docker info
-dotnet test MyRecipeBook.slnx --configuration Release --no-build --no-restore --logger trx --results-directory TestResults
+dotnet test MyRecipeBook.slnx --configuration Release --no-build --no-restore --settings tests/coverlet.runsettings --collect "XPlat Code Coverage" --logger trx --results-directory TestResults
 ```
 
 ### Banco local
