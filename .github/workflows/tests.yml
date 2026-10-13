@@ -63,6 +63,32 @@ jobs:
             fi
           done
 
+      - name: Generate consolidated coverage report
+        id: coverage
+        if: ${{ !cancelled() && hashFiles('TestResults/*/coverage.cobertura.xml') != '' }}
+        uses: danielpalme/ReportGenerator-GitHub-Action@d3ebf1f760f7d8ab92cc44d9bcfee7ad73722a31 # 5.5.11
+        with:
+          # Use original reports; TRX attachment copies live in deeper directories.
+          reports: TestResults/*/coverage.cobertura.xml
+          targetdir: CoverageReport
+          reporttypes: Html;MarkdownSummaryGithub;Cobertura
+          sourcedirs: ${{ github.workspace }}
+          toolpath: ${{ runner.temp }}/reportgenerator
+          title: MyRecipeBook coverage
+
+      - name: Publish coverage summary
+        if: ${{ !cancelled() && steps.coverage.outcome == 'success' }}
+        run: cat CoverageReport/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload HTML coverage report
+        if: ${{ !cancelled() && steps.coverage.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: coverage-report
+          path: CoverageReport/
+          if-no-files-found: error
+          retention-days: 2
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

@@ -128,6 +128,10 @@ O workflow **Lint** restaura as dependências, compila toda a solução em Relea
 
 O workflow **Tests** compila em Release e executa todos os testes da solução usando `tests/coverlet.runsettings` e o coletor `XPlat Code Coverage`. Ele usa `ubuntu-24.04`, com os testes executados diretamente no runner e acesso ao Docker pré-instalado, conforme a [documentação do Testcontainers para GitHub Actions](https://dotnet.testcontainers.org/cicd/#github-actions). A factory gerencia o MySQL temporário e o Ryuk permanece habilitado para a limpeza dos recursos. O logger TRX gera os resultados dos testes, e o runsettings configura a cobertura em Cobertura e OpenCover apenas para as assemblies `MyRecipeBook.*`, excluindo os utilitários de testes e todos os arquivos sob `Migrations/`, inclusive subpastas. Após os testes passarem, o workflow exige a presença dos três formatos de relatório. Os arquivos `.trx`, `coverage.cobertura.xml` e `coverage.opencover.xml` gerados são disponibilizados como artefato `test-results` por dois dias, inclusive quando há falhas nos testes.
 
+O [ReportGenerator](https://github.com/danielpalme/ReportGenerator-GitHub-Action) 5.5.11 consolida os relatórios Cobertura dos três projetos de testes e gera um resumo Markdown, um relatório HTML e um XML Cobertura consolidado. A entrada `TestResults/*/coverage.cobertura.xml` seleciona os arquivos originais e evita incluir novamente as cópias dos anexos TRX. A geração também ocorre quando os testes falham, desde que existam arquivos de cobertura; nesse caso, o relatório contém os resultados coletados até a falha e o workflow continua marcado como falho.
+
+Para visualizar a cobertura no GitHub, abra **Actions → Tests → execução → Summary**. O resumo mostra a cobertura de linhas e branches e os resultados por assembly/classe. Para navegar pelo código e ver as linhas cobertas e descobertas, baixe o artefato **coverage-report**, extraia o ZIP e abra `index.html` no navegador. O HTML, `SummaryGithub.md` e o `Cobertura.xml` consolidado ficam disponíveis por dois dias. O artefato `test-results` continua contendo os relatórios originais.
+
 Para reproduzir as verificações localmente, com Docker disponível:
 
 ```bash
@@ -137,6 +141,20 @@ dotnet format MyRecipeBook.slnx --verify-no-changes --no-restore
 docker info
 dotnet test MyRecipeBook.slnx --configuration Release --no-build --no-restore --settings tests/coverlet.runsettings --collect "XPlat Code Coverage" --logger trx --results-directory TestResults
 ```
+
+Para gerar o relatório visual localmente na raiz do repositório:
+
+```bash
+dotnet tool install dotnet-reportgenerator-globaltool --tool-path .tools/reportgenerator --version 5.5.11
+.tools/reportgenerator/reportgenerator \
+  "-reports:TestResults/*/coverage.cobertura.xml" \
+  "-targetdir:CoverageReport" \
+  "-reporttypes:Html;MarkdownSummaryGithub;Cobertura" \
+  "-sourcedirs:." \
+  "-title:MyRecipeBook coverage"
+```
+
+Abra `CoverageReport/index.html` no navegador. O diretório do relatório e o da ferramenta local são ignorados pelo Git.
 
 ### Banco local
 

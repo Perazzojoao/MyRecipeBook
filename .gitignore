@@ -480,3 +480,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Local coverage tooling and generated reports
+/.tools/reportgenerator/
+/CoverageReport/
