@@ -26,7 +26,6 @@ public class RegisterUserAccountUseCase : IRegisterUserAccountUseCase {
 
   public async Task<ResponseRegisterUserJson> Execute(RequestRegisterUserAccountJson request) {
     await ValidateAndThrowOnFailures(request);
-
     var user = request.Adapt<Domain.Entities.User>();
     user.Password = _passwordHasher.HashPassword(user.Password);
     await _userWriteOnlyRepository.Add(user);
