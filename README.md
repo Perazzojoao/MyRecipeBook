@@ -105,11 +105,40 @@ make test
 
 O comando executa `dotnet test MyRecipeBook.slnx`.
 
+Para executar os testes por categoria:
+
+```bash
+make test-unit
+make test-integration
+```
+
+`make test-unit` executa os projetos `Validators.Tests` e `UseCases.Tests`. `make test-integration` executa apenas `WebApi.Tests` e precisa do Docker disponível para iniciar o MySQL temporário.
+
 O projeto `Validators.Tests` referencia `MyRecipeBook.Application` e `CommonTestUtilities` e cobre o sucesso da validação e os erros de nome, e-mail e senha vazios. A regra de senha usa `CascadeMode.Stop` para retornar apenas o erro de campo obrigatório quando a senha está vazia. A class library `CommonTestUtilities` centraliza a geração de requests com Bogus e os mocks de repositórios, unidade de trabalho e hash de senha com Moq.
 
 O projeto `UseCases.Tests` referencia `CommonTestUtilities` e `MyRecipeBook.Application` e cobre o cadastro com sucesso, a rejeição de nome vazio e a rejeição de e-mail já cadastrado.
 
 O projeto `WebApi.Tests` referencia `CommonTestUtilities` e `MyRecipeBook.Api` e inclui `Shouldly`, `Microsoft.AspNetCore.Mvc.Testing` e `Testcontainers.MySql`. Os testes verificam o cadastro via `POST /users`, a persistência do usuário e a resposta de erro para nome vazio em `en-US` e `pt-BR`. Para executá-los, o Docker precisa estar disponível: a factory inicia um container temporário `mysql:8.4`, usa o ambiente `Tests` e sobrescreve a connection string em memória. As migrations da API criam o schema nesse banco; a connection string do FluentMigrator é resolvida por callback para considerar essa configuração. O arquivo `appsettings.Tests.json` está vazio porque a conexão é fornecida pela factory. A classe `Program` é pública e parcial para permitir o uso de `WebApplicationFactory`, e `InternalsVisibleTo("WebApi.Tests")` permite que os testes consultem o `MyRecipeBookDbContext` interno.
+
+### Integração contínua
+
+Os workflows `.github/workflows/lint.yml` e `.github/workflows/tests.yml` executam separadamente em pushes na branch `main`, ao abrir, atualizar ou reabrir um PR com destino às branches `dev` ou `main`, e quando um PR passa a estar pronto para revisão.
+
+O workflow **Lint** restaura as dependências, compila toda a solução em Release e executa `dotnet format --verify-no-changes`, que verifica formatação e diagnósticos corrigíveis de estilo e análise estática no nível padrão de warning ou superior. O `.editorconfig` versionado mantém o estilo C# com dois espaços e a chave de abertura na mesma linha. O `global.json` seleciona um SDK estável da série .NET 10, permitindo atualizações dentro dessa série.
+
+O workflow **Tests** compila em Release e executa todos os testes da solução. Ele usa `ubuntu-24.04`, com os testes executados diretamente no runner e acesso ao Docker pré-instalado, conforme a [documentação do Testcontainers para GitHub Actions](https://dotnet.testcontainers.org/cicd/#github-actions). A factory gerencia o MySQL temporário e o Ryuk permanece habilitado para a limpeza dos recursos. Os relatórios TRX são disponibilizados como artefato `test-results` por dois dias, inclusive quando há falhas nos testes.
+
+Para reproduzir as verificações localmente, com Docker disponível:
+
+```bash
+dotnet restore MyRecipeBook.slnx
+dotnet build MyRecipeBook.slnx --configuration Release --no-restore
+dotnet format MyRecipeBook.slnx --verify-no-changes --no-restore
+docker info
+dotnet test MyRecipeBook.slnx --configuration Release --no-build --no-restore --logger trx --results-directory TestResults
+```
+
+### Banco local
 
 Para iniciar o MySQL local e a interface phpMyAdmin:
 
@@ -417,7 +446,7 @@ volumes:
 Crie `Makefile` na raiz. As linhas dos comandos precisam começar com um caractere TAB real, não espaços:
 
 ```makefile
-.PHONY: dev test
+.PHONY: dev test test-unit test-integration
 
 dev:
 	# Evita o erro de manifesto de assets no SDK 10; preserva o Hot Reload de C#.
@@ -425,6 +454,13 @@ dev:
 
 test:
 	dotnet test MyRecipeBook.slnx
+
+test-unit:
+	dotnet test tests/Validators.Tests/Validators.Tests.csproj
+	dotnet test tests/UseCases.Tests/UseCases.Tests.csproj
+
+test-integration:
+	dotnet test tests/WebApi.Tests/WebApi.Tests.csproj
 ```
 
 Finalize com restore e build:
