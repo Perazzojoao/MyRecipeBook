@@ -15,6 +15,7 @@ public class RegisterUserAccountValidator : AbstractValidator<RequestRegisterUse
       .NotEmpty().WithMessage(ResourceMessagesException.VALIDATION_EMAIL_REQUIRED);
 
     RuleFor(user => user.Password)
+      .Cascade(CascadeMode.Stop)
       .NotEmpty().WithMessage(ResourceMessagesException.VALIDATION_PASSWORD_REQUIRED)
       .MinimumLength(6).WithMessage(ResourceMessagesException.VALIDATION_PASSWORD_TOO_SHORT);
 
