@@ -1,6 +1,6 @@
 # MyRecipeBook
 
-API backend em .NET 10 organizada em seis projetos. O fluxo atual cadastra usuários, valida os dados e a duplicidade de e-mail, gera o hash da senha com Argon2 e persiste no MySQL. As alterações de schema são executadas pelo FluentMigrator na inicialização da API.
+API backend em .NET 10 organizada em seis projetos de produção, três projetos de testes xUnit e uma biblioteca de utilitários para testes. O fluxo atual cadastra usuários, valida os dados e a duplicidade de e-mail, gera o hash da senha com Argon2 e persiste no MySQL. As alterações de schema são executadas pelo FluentMigrator na inicialização da API.
 
 ## Requisitos
 
@@ -24,9 +24,14 @@ src/
 └── Shared/
     ├── MyRecipeBook.Communication/   # Tipos compartilhados de comunicação
     └── MyRecipeBook.Exception/       # Tipos compartilhados de exceção
+tests/
+├── CommonTestUtilities/             # Class library de utilitários para testes
+├── UseCases.Tests/                   # Testes xUnit de casos de uso
+├── Validators.Tests/                # Testes xUnit
+└── WebApi.Tests/                    # Testes xUnit da API
 ```
 
-A solution `MyRecipeBook.slnx` agrupa os quatro projetos de Backend em `src/Backend` e os dois projetos compartilhados em `src/Shared`. Há também uma pasta `tests/` vazia na solution.
+A solution `MyRecipeBook.slnx` agrupa os quatro projetos de Backend em `src/Backend`, os dois projetos compartilhados em `src/Shared` e os projetos `Validators.Tests`, `UseCases.Tests`, `WebApi.Tests` e `CommonTestUtilities` em `tests`.
 
 ### Referências entre projetos
 
@@ -38,6 +43,10 @@ A solution `MyRecipeBook.slnx` agrupa os quatro projetos de Backend em `src/Back
 | `MyRecipeBook.Domain` | Nenhum projeto da solução |
 | `MyRecipeBook.Communication` | Nenhum projeto da solução |
 | `MyRecipeBook.Exception` | Nenhum projeto da solução |
+| `Validators.Tests` | `MyRecipeBook.Application`, `CommonTestUtilities` |
+| `CommonTestUtilities` | `MyRecipeBook.Communication`, `MyRecipeBook.Domain` |
+| `UseCases.Tests` | `CommonTestUtilities`, `MyRecipeBook.Application` |
+| `WebApi.Tests` | `CommonTestUtilities`, `MyRecipeBook.Api` |
 
 ### FluentValidation
 
@@ -69,6 +78,13 @@ A classe pública `ResourceMessagesException` é gerada pelo MSBuild em `obj/`, 
 | Infrastructure | Microsoft.Extensions.DependencyInjection | 10.0.12 |
 | Infrastructure | FluentMigrator | 8.0.1 |
 | Infrastructure | FluentMigrator.Runner | 8.0.1 |
+| CommonTestUtilities | Bogus | 35.6.5 |
+| CommonTestUtilities | Moq | 4.21.0 |
+| Validators.Tests | Shouldly | 4.3.0 |
+| UseCases.Tests | Shouldly | 4.3.0 |
+| WebApi.Tests | Shouldly | 4.3.0 |
+| WebApi.Tests | Microsoft.AspNetCore.Mvc.Testing | 10.0.12 |
+| WebApi.Tests | Testcontainers.MySql | 4.16.0 |
 
 Mapster converte o request para a entidade `User`. Entity Framework Core realiza as consultas e a persistência; FluentMigrator controla o schema. `Microsoft.EntityFrameworkCore.Design` não é utilizado.
 
@@ -80,6 +96,20 @@ Na raiz do repositório, restaure e compile:
 dotnet restore MyRecipeBook.slnx
 dotnet build MyRecipeBook.slnx
 ```
+
+Para executar os testes:
+
+```bash
+make test
+```
+
+O comando executa `dotnet test MyRecipeBook.slnx`.
+
+O projeto `Validators.Tests` referencia `MyRecipeBook.Application` e `CommonTestUtilities` e cobre o sucesso da validação e os erros de nome, e-mail e senha vazios. A regra de senha usa `CascadeMode.Stop` para retornar apenas o erro de campo obrigatório quando a senha está vazia. A class library `CommonTestUtilities` centraliza a geração de requests com Bogus e os mocks de repositórios, unidade de trabalho e hash de senha com Moq.
+
+O projeto `UseCases.Tests` referencia `CommonTestUtilities` e `MyRecipeBook.Application` e cobre o cadastro com sucesso, a rejeição de nome vazio e a rejeição de e-mail já cadastrado.
+
+O projeto `WebApi.Tests` referencia `CommonTestUtilities` e `MyRecipeBook.Api` e inclui `Shouldly`, `Microsoft.AspNetCore.Mvc.Testing` e `Testcontainers.MySql`. Os testes verificam o cadastro via `POST /users`, a persistência do usuário e a resposta de erro para nome vazio em `en-US` e `pt-BR`. Para executá-los, o Docker precisa estar disponível: a factory inicia um container temporário `mysql:8.4`, usa o ambiente `Tests` e sobrescreve a connection string em memória. As migrations da API criam o schema nesse banco; a connection string do FluentMigrator é resolvida por callback para considerar essa configuração. O arquivo `appsettings.Tests.json` está vazio porque a conexão é fornecida pela factory. A classe `Program` é pública e parcial para permitir o uso de `WebApplicationFactory`, e `InternalsVisibleTo("WebApi.Tests")` permite que os testes consultem o `MyRecipeBookDbContext` interno.
 
 Para iniciar o MySQL local e a interface phpMyAdmin:
 
@@ -233,7 +263,7 @@ Um erro MySQL `1045` indica falha de autenticação: compare a connection string
 
 ## Recriar a estrutura inicial
 
-Os comandos abaixo criam a solution, os seis projetos, as referências e as dependências diretas em um diretório vazio. `--format slnx` cria XML Solution Files. Esses comandos não geram o código de negócio, os recursos ou as migrations: use os arquivos versionados em `src/` para reproduzir o comportamento atual.
+Os comandos abaixo criam a solution, os seis projetos de produção, os três projetos de testes, a biblioteca de utilitários para testes, as referências e as dependências diretas em um diretório vazio. `--format slnx` cria XML Solution Files. Esses comandos não geram o código de negócio, os recursos ou as migrations: use os arquivos versionados em `src/` para reproduzir o comportamento atual.
 
 ```bash
 mkdir MyRecipeBook
@@ -247,6 +277,10 @@ dotnet new classlib -n MyRecipeBook.Domain -o src/Backend/MyRecipeBook.Domain -f
 dotnet new classlib -n MyRecipeBook.Infrastructure -o src/Backend/MyRecipeBook.Infrastructure -f net10.0
 dotnet new classlib -n MyRecipeBook.Communication -o src/Shared/MyRecipeBook.Communication -f net10.0
 dotnet new classlib -n MyRecipeBook.Exception -o src/Shared/MyRecipeBook.Exception -f net10.0
+dotnet new xunit -n Validators.Tests -o tests/Validators.Tests -f net10.0
+dotnet new xunit -n UseCases.Tests -o tests/UseCases.Tests -f net10.0
+dotnet new xunit -n WebApi.Tests -o tests/WebApi.Tests -f net10.0
+dotnet new classlib -n CommonTestUtilities -o tests/CommonTestUtilities -f net10.0
 
 dotnet sln MyRecipeBook.slnx add src/Backend/MyRecipeBook.Api/MyRecipeBook.Api.csproj --solution-folder src/Backend
 dotnet sln MyRecipeBook.slnx add src/Backend/MyRecipeBook.Application/MyRecipeBook.Application.csproj --solution-folder src/Backend
@@ -254,6 +288,30 @@ dotnet sln MyRecipeBook.slnx add src/Backend/MyRecipeBook.Domain/MyRecipeBook.Do
 dotnet sln MyRecipeBook.slnx add src/Backend/MyRecipeBook.Infrastructure/MyRecipeBook.Infrastructure.csproj --solution-folder src/Backend
 dotnet sln MyRecipeBook.slnx add src/Shared/MyRecipeBook.Communication/MyRecipeBook.Communication.csproj --solution-folder src/Shared
 dotnet sln MyRecipeBook.slnx add src/Shared/MyRecipeBook.Exception/MyRecipeBook.Exception.csproj --solution-folder src/Shared
+dotnet sln MyRecipeBook.slnx add tests/Validators.Tests/Validators.Tests.csproj --solution-folder tests
+dotnet sln MyRecipeBook.slnx add tests/UseCases.Tests/UseCases.Tests.csproj --solution-folder tests
+dotnet sln MyRecipeBook.slnx add tests/WebApi.Tests/WebApi.Tests.csproj --solution-folder tests
+dotnet sln MyRecipeBook.slnx add tests/CommonTestUtilities/CommonTestUtilities.csproj --solution-folder tests
+
+dotnet reference add \
+  src/Backend/MyRecipeBook.Application/MyRecipeBook.Application.csproj \
+  tests/CommonTestUtilities/CommonTestUtilities.csproj \
+  --project tests/Validators.Tests/Validators.Tests.csproj
+
+dotnet reference add \
+  tests/CommonTestUtilities/CommonTestUtilities.csproj \
+  src/Backend/MyRecipeBook.Application/MyRecipeBook.Application.csproj \
+  --project tests/UseCases.Tests/UseCases.Tests.csproj
+
+dotnet reference add \
+  tests/CommonTestUtilities/CommonTestUtilities.csproj \
+  src/Backend/MyRecipeBook.Api/MyRecipeBook.Api.csproj \
+  --project tests/WebApi.Tests/WebApi.Tests.csproj
+
+dotnet reference add \
+  src/Shared/MyRecipeBook.Communication/MyRecipeBook.Communication.csproj \
+  src/Backend/MyRecipeBook.Domain/MyRecipeBook.Domain.csproj \
+  --project tests/CommonTestUtilities/CommonTestUtilities.csproj
 
 dotnet reference add \
   src/Shared/MyRecipeBook.Communication/MyRecipeBook.Communication.csproj \
@@ -283,11 +341,16 @@ dotnet add src/Backend/MyRecipeBook.Infrastructure/MyRecipeBook.Infrastructure.c
 dotnet add src/Backend/MyRecipeBook.Infrastructure/MyRecipeBook.Infrastructure.csproj package Microsoft.Extensions.DependencyInjection --version 10.0.12
 dotnet add src/Backend/MyRecipeBook.Infrastructure/MyRecipeBook.Infrastructure.csproj package FluentMigrator --version 8.0.1
 dotnet add src/Backend/MyRecipeBook.Infrastructure/MyRecipeBook.Infrastructure.csproj package FluentMigrator.Runner --version 8.0.1
+dotnet add tests/CommonTestUtilities/CommonTestUtilities.csproj package Bogus --version 35.6.5
+dotnet add tests/CommonTestUtilities/CommonTestUtilities.csproj package Moq --version 4.21.0
+dotnet add tests/Validators.Tests/Validators.Tests.csproj package Shouldly --version 4.3.0
+dotnet add tests/UseCases.Tests/UseCases.Tests.csproj package Shouldly --version 4.3.0
+dotnet add tests/WebApi.Tests/WebApi.Tests.csproj package Shouldly --version 4.3.0
+dotnet add tests/WebApi.Tests/WebApi.Tests.csproj package Microsoft.AspNetCore.Mvc.Testing --version 10.0.12
+dotnet add tests/WebApi.Tests/WebApi.Tests.csproj package Testcontainers.MySql --version 4.16.0
 ```
 
 `dotnet sln add` registra e organiza projetos na solution; as chamadas separadas a `dotnet reference add` criam as dependências `ProjectReference` entre eles.
-
-Para reproduzir também a pasta organizacional vazia de testes, acrescente `<Folder Name="/tests/" />` antes de `</Solution>` no `MyRecipeBook.slnx`. Essa pasta ainda não contém projetos de teste.
 
 Use o `src/Backend/MyRecipeBook.Api/Program.cs` versionado neste repositório, junto com os controllers, converters, filtros, casos de uso e migrations. O pipeline registra a injeção de dependências, o Swagger, a normalização das strings JSON, o idioma pelo `Accept-Language`, o filtro de exceções e a execução das migrations na inicialização.
 
@@ -354,11 +417,14 @@ volumes:
 Crie `Makefile` na raiz. As linhas dos comandos precisam começar com um caractere TAB real, não espaços:
 
 ```makefile
-.PHONY: dev
+.PHONY: dev test
 
 dev:
 	# Evita o erro de manifesto de assets no SDK 10; preserva o Hot Reload de C#.
 	DOTNET_WATCH_SUPPRESS_STATIC_FILE_HANDLING=1 dotnet watch --project src/Backend/MyRecipeBook.Api run --launch-profile http
+
+test:
+	dotnet test MyRecipeBook.slnx
 ```
 
 Finalize com restore e build:
