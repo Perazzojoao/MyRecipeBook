@@ -51,14 +51,28 @@ jobs:
           --configuration Release
           --no-build
           --no-restore
+          --settings tests/coverlet.runsettings
+          --collect "XPlat Code Coverage"
           --logger trx
           --results-directory TestResults
+
+      - name: Verify test reports
+        run: |
+          for report in '*.trx' 'coverage.cobertura.xml' 'coverage.opencover.xml'; do
+            if ! find TestResults -type f -name "$report" -print -quit | grep -q .; then
+              echo "::error::Missing test report: $report"
+              exit 1
+            fi
+          done
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: test-results
-          path: TestResults/**/*.trx
-          if-no-files-found: warn
+          path: |
+            TestResults/**/*.trx
+            TestResults/**/coverage.cobertura.xml
+            TestResults/**/coverage.opencover.xml
+          if-no-files-found: error
           retention-days: 2
