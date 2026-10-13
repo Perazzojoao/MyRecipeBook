@@ -77,3 +77,6 @@ async Task ExecuteMigrations() {
 
   DatabaseMigration.ExecuteMigrations(scope.ServiceProvider);
 }
+
+// Partial class to allow for integration testing
+public partial class Program { }
