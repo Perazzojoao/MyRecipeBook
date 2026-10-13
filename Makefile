@@ -1,4 +1,4 @@
-.PHONY: dev test
+.PHONY: dev test test-unit test-integration
 
 dev:
 	# Evita o erro de manifesto de assets no SDK 10; preserva o Hot Reload de C#.
@@ -6,3 +6,10 @@ dev:
 
 test:
 	dotnet test MyRecipeBook.slnx
+
+test-unit:
+	dotnet test tests/Validators.Tests/Validators.Tests.csproj
+	dotnet test tests/UseCases.Tests/UseCases.Tests.csproj
+
+test-integration:
+	dotnet test tests/WebApi.Tests/WebApi.Tests.csproj
